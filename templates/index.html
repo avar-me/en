@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English-Avar Dictionary | en.avar.me</title>
+    <meta name="description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar (Maġarulał mацӀ) — a Northeast Caucasian language of Dagestan. Features Latin transliteration and Cyrillic script.">
+    <meta name="keywords" content="Avar dictionary, English Avar translation, Avar language, Dagestan language, Maġarulał, Northeast Caucasian, transliteration, Cyrillic to Latin">
+    <meta name="author" content="avar.me">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://en.avar.me/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://en.avar.me/">
+    <meta property="og:title" content="English-Avar Dictionary | en.avar.me">
+    <meta property="og:description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar language with Latin and Cyrillic scripts.">
+    <meta property="og:image" content="https://en.avar.me/og-image.jpg">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="en.avar.me">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://en.avar.me/">
+    <meta name="twitter:title" content="English-Avar Dictionary | en.avar.me">
+    <meta name="twitter:description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar language.">
+    <meta name="twitter:image" content="https://en.avar.me/og-image.jpg">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "English-Avar Dictionary",
+        "alternateName": "en.avar.me",
+        "url": "https://en.avar.me/",
+        "description": "Free online English to Avar dictionary with instant search",
+        "inLanguage": ["en", "av"],
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://en.avar.me/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+        }
+    }
+    </script>
+    
+    <link rel="icon" type="image/png" href="avar.me.png">
+    <link rel="apple-touch-icon" href="avar.me.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>English-Avar Dictionary</h1>
+            <p class="subtitle">Inglis-Maġarulał Ražaɣał</p>
+        </div>
+    </header>
+
+    <nav class="nav-bar">
+        <div class="container">
+            <a href="index.html" class="active">Dictionary</a>
+            <a href="alphabet.html">Alphabet</a>
+            <a href="about.html">About</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="search-section">
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Search for a word..."
+                    autocomplete="off"
+                    autofocus
+                >
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+        </section>
+
+        <section class="results-section">
+            <div id="results" class="results">
+                <!-- Results will be displayed here -->
+            </div>
+        </section>
+
+        <section id="random-section" class="random-section">
+            <h2>Random Words</h2>
+            <div id="random-words" class="word-list">
+                <!-- Random words will be displayed here -->
+            </div>
+            <button id="refresh-random" class="btn-refresh">Show More Words</button>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                Based on the work of <a href="https://cg.avar.me" target="_blank" rel="noopener">Cyril Graham</a>
+            </p>
+            <p>
+                Contact: <a href="mailto:admin@avar.me">admin@avar.me</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
