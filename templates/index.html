@@ -2,39 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>English-Avar Dictionary | en.avar.me</title>
-    <meta name="description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar (Maġarulał mацӀ) — a Northeast Caucasian language of Dagestan. Features Latin transliteration and Cyrillic script.">
-    <meta name="keywords" content="Avar dictionary, English Avar translation, Avar language, Dagestan language, Maġarulał, Northeast Caucasian, transliteration, Cyrillic to Latin">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>English–Avar Dictionary | en.avar.me</title>
+    <meta name="description" content="Free online English–Avar and Avar–English dictionary with instant search. Avar (Maġarulał) is a Northeast Caucasian language of Dagestan.">
+    <meta name="keywords" content="Avar dictionary, English Avar translation, Avar language, Dagestan, Maġarulał">
     <meta name="author" content="avar.me">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://en.avar.me/">
-    
-    <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://en.avar.me/">
-    <meta property="og:title" content="English-Avar Dictionary | en.avar.me">
-    <meta property="og:description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar language with Latin and Cyrillic scripts.">
+    <meta property="og:title" content="English–Avar Dictionary | en.avar.me">
+    <meta property="og:description" content="Free online English–Avar and Avar–English dictionary with instant search.">
     <meta property="og:image" content="https://en.avar.me/og-image.jpg">
     <meta property="og:locale" content="en_US">
     <meta property="og:site_name" content="en.avar.me">
-    
-    <!-- Twitter -->
+
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://en.avar.me/">
-    <meta name="twitter:title" content="English-Avar Dictionary | en.avar.me">
-    <meta name="twitter:description" content="Free online English to Avar dictionary with instant search. Translate English words to Avar language.">
+    <meta name="twitter:title" content="English–Avar Dictionary | en.avar.me">
+    <meta name="twitter:description" content="Free online English–Avar and Avar–English dictionary with instant search.">
     <meta name="twitter:image" content="https://en.avar.me/og-image.jpg">
-    
-    <!-- Structured Data -->
+
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        "name": "English-Avar Dictionary",
+        "name": "English–Avar Dictionary",
         "alternateName": "en.avar.me",
         "url": "https://en.avar.me/",
-        "description": "Free online English to Avar dictionary with instant search",
+        "description": "Free online English–Avar and Avar–English dictionary",
         "inLanguage": ["en", "av"],
         "potentialAction": {
             "@type": "SearchAction",
@@ -43,67 +39,90 @@
         }
     }
     </script>
-    
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css?v=__ASSET_VERSION__">
     <link rel="icon" type="image/png" href="avar.me.png">
     <link rel="apple-touch-icon" href="avar.me.png">
-    <link rel="stylesheet" href="styles.css">
+
+    <link rel="preload" href="data/en-av/index.words.txt?v=__ASSET_VERSION__" as="fetch" crossorigin>
+    <link rel="preload" href="data/en-av/browse.json?v=__ASSET_VERSION__" as="fetch" crossorigin>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>English-Avar Dictionary</h1>
-            <p class="subtitle">Inglis-Maġarulał Ražaɣał</p>
-        </div>
-    </header>
+    <div class="bg-pattern" aria-hidden="true"></div>
 
-    <nav class="nav-bar">
-        <div class="container">
-            <a href="index.html" class="active">Dictionary</a>
-            <a href="alphabet.html">Alphabet</a>
-            <a href="about.html">About</a>
-        </div>
-    </nav>
+    <div class="container">
+        <header class="header">
+            <p class="header-tag">en.avar.me</p>
+            <h1 class="title" id="dictTitle">English–Avar<br><span class="dot">Dictionary</span></h1>
+            <div class="dict-toggle">
+                <button class="toggle-btn active" data-type="en-av" type="button">En → Av</button>
+                <button class="toggle-btn" data-type="av-en" type="button">Av → En</button>
+            </div>
+            <nav class="site-nav" aria-label="Site">
+                <a href="index.html" class="active">Dictionary</a>
+                <a href="alphabet.html">Alphabet</a>
+                <a href="about.html">About</a>
+            </nav>
+        </header>
 
-    <main class="container">
-        <section class="search-section">
-            <div class="search-wrapper">
-                <input 
-                    type="text" 
-                    id="search-input" 
-                    placeholder="Search for a word..."
-                    autocomplete="off"
-                    autofocus
-                >
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="search-input"
+                        placeholder="Search for a word…"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        autofocus
+                    >
+                    <button id="clearBtn" class="clear-btn" type="button" aria-label="Clear">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
                 <div id="suggestions" class="suggestions"></div>
             </div>
-        </section>
+            <div id="searchStats" class="search-stats"></div>
+        </div>
 
-        <section class="results-section">
-            <div id="results" class="results">
-                <!-- Results will be displayed here -->
-            </div>
-        </section>
+        <div id="results" class="results-section"></div>
 
-        <section id="random-section" class="random-section">
-            <h2>Random Words</h2>
-            <div id="random-words" class="word-list">
-                <!-- Random words will be displayed here -->
-            </div>
-            <button id="refresh-random" class="btn-refresh">Show More Words</button>
-        </section>
-    </main>
+        <div id="randomWordsSection" class="home-samples-section">
+            <div id="homeSamples"></div>
+        </div>
 
-    <footer>
-        <div class="container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading…</p>
+        </div>
+
+        <div id="error" class="error-message"></div>
+
+        <footer class="footer">
             <p>
                 Based on the work of <a href="https://cg.avar.me" target="_blank" rel="noopener">Cyril Graham</a>
+                · <a href="mailto:admin@avar.me">admin@avar.me</a>
             </p>
             <p>
-                Contact: <a href="mailto:admin@avar.me">admin@avar.me</a>
+                <a href="https://avar.me" target="_blank" rel="noopener">avar.me</a>
+                · <a href="https://github.com/avar-me" target="_blank" rel="noopener">github.com/avar-me</a>
             </p>
-        </div>
-    </footer>
+        </footer>
+    </div>
 
-    <script src="app.js"></script>
+    <script>window.__DICT_ASSET_V__ = "__ASSET_VERSION__";</script>
+    <script src="app.js?v=__ASSET_VERSION__" charset="utf-8"></script>
 </body>
 </html>
