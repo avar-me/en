@@ -45,13 +45,13 @@ echo "=== 3. Build alphabet page ==="
 python3 "$SCRIPT_DIR/build_alphabet.py" "$TEMPLATES_DIR/alphabet.html" "$OUTPUT_DIR/alphabet.html"
 
 echo ""
-echo "=== 4. build_data.py (en-av.jsonl → data/en-av/) ==="
-DICTIONARY_JSONL="$JSONL_EN_AV" DICT_NAME="en-av" DOCS_ROOT="$OUTPUT_DIR" \
+echo "=== 4. build_data.py (av-en.jsonl → data/av-en/) ==="
+DICTIONARY_JSONL="$JSONL_AV_EN" DICT_NAME="av-en" DOCS_ROOT="$OUTPUT_DIR" \
   python3 "$SCRIPT_DIR/build_data.py"
 
 echo ""
-echo "=== 5. build_data.py (av-en.jsonl → data/av-en/) ==="
-DICTIONARY_JSONL="$JSONL_AV_EN" DICT_NAME="av-en" DOCS_ROOT="$OUTPUT_DIR" \
+echo "=== 5. build_data.py (en-av.jsonl → data/en-av/) ==="
+DICTIONARY_JSONL="$JSONL_EN_AV" DICT_NAME="en-av" DOCS_ROOT="$OUTPUT_DIR" \
   python3 "$SCRIPT_DIR/build_data.py"
 
 echo ""

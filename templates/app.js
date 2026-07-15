@@ -14,7 +14,7 @@ const CONFIG = {
     HOME_SAMPLES: 14,
     DEBOUNCE_DELAY: 150,
     CHUNK_CACHE_SIZE: 50,
-    DEFAULT_DICT_TYPE: 'en-av'
+    DEFAULT_DICT_TYPE: 'av-en'
 };
 
 /** Подставляется при сборке (index.html); сбрасывает кэш Cloudflare для data/*. */
@@ -923,8 +923,8 @@ async function loadAndDisplayWord(word) {
 // ============================================================================
 
 const DICT_TITLES = {
-    'en-av': { h1: 'English–Avar<br><span class="dot">Dictionary</span>', doc: 'English–Avar Dictionary — en.avar.me' },
     'av-en': { h1: 'Avar–English<br><span class="dot">Dictionary</span>', doc: 'Avar–English Dictionary — en.avar.me' },
+    'en-av': { h1: 'English–Avar<br><span class="dot">Dictionary</span>', doc: 'English–Avar Dictionary — en.avar.me' },
 };
 
 /**
