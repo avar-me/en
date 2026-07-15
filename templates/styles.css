@@ -8,21 +8,21 @@
    ============================================================================ */
 
 :root {
-  --bg-deep:        #f4f1ea;
+  --bg-deep:        #f5f7f5;
   --bg-card:        #ffffff;
-  --bg-card-hover:  #faf8f4;
-  --bg-secondary:   #f0ece2;
+  --bg-card-hover:  #eef3ee;
+  --bg-secondary:   #e8efe8;
 
   --text:           #1c2229;
   --text-muted:     #5a6570;
   --text-light:     #8a9099;
 
-  --accent:         #9a7b1a;
-  --accent-glow:    rgba(154, 123, 26, 0.25);
-  --accent-light:   rgba(154, 123, 26, 0.12);
+  --accent:         #3d7341;
+  --accent-glow:    rgba(61, 115, 65, 0.25);
+  --accent-light:   rgba(61, 115, 65, 0.12);
 
-  --link:           #1a5f8a;
-  --link-hover:     #0d4a6e;
+  --link:           #2f6b35;
+  --link-hover:     #24542a;
 
   --border:         rgba(28, 34, 41, 0.1);
   --border-strong:  rgba(28, 34, 41, 0.18);
@@ -76,9 +76,9 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 162, 39, 0.14), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(94, 140, 180, 0.08), transparent),
-    linear-gradient(180deg, #faf8f4 0%, var(--bg-deep) 50%);
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(61, 115, 65, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(74, 138, 80, 0.08), transparent),
+    linear-gradient(180deg, #fafafa 0%, var(--bg-deep) 50%);
   pointer-events: none;
 }
 
