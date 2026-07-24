@@ -21,6 +21,7 @@ from pathlib import Path
 
 MAX_CHUNK_SIZE = 100 * 1024
 MAX_WORDS_PER_CHUNK = 500
+PHRASE_CHUNK_SIZE = 4000
 
 # repo/src/build_data.py → parents[1] = корень репозитория
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -32,8 +33,13 @@ def normalize_word(word: str) -> str:
     import re
 
     normalized = word.lower().strip()
-    # Согласовано с normalizeWord() в app.js (поиск и ключи чанков)
+    # Согласовано с normalizeWord() в app.js и normalizeQuery()/normalizeText()
+    # в phrases.js (поиск, ключи чанков, порядок сортировки индекса).
     normalized = re.sub(r"[1IiｌlL|!ǀӀІ]", "ӏ", normalized)
+    # ё печатают редко — «елка» должно находить «ёлка». Ё стоит вне основного
+    # кириллического блока (U+0451, после «я»), поэтому это влияет и на
+    # порядок сортировки индекса — см. create_index()/write_headwords_index().
+    normalized = normalized.replace("ё", "е")
     return normalized
 
 
@@ -425,7 +431,12 @@ def create_index(entries: dict[str, dict]) -> list[str]:
                         all_words.add(variant)
                 else:
                     all_words.add(fs)
-    words = sorted(all_words)
+    # Сортируем по normalize_word(), а не по сырому unicode-порядку: бинарный
+    # поиск во фронтенде (binarySearchPrefix/findExactWordInIndex) сравнивает
+    # normalizeWord(words[mid]), так что массив должен быть монотонен именно
+    # по этому ключу — иначе слова на «ё» (U+0451, вне основного алфавитного
+    # блока, кодовая точка после «я») не находились бы поиском по «е».
+    words = sorted(all_words, key=lambda w: (normalize_word(w), w))
     print(f"Уникальных заглавных слов: {len(entries)}")
     print(f"Строк в индексе (слова + формы): {len(words)}")
     return words
@@ -494,7 +505,7 @@ def write_index(words: list[str], output_dir: Path) -> None:
 
 def write_headwords_index(entries: dict[str, dict], output_dir: Path) -> int:
     """Только заглавные слова — для листинга по префиксу (как на avar.me)."""
-    headwords = sorted(entries.keys())
+    headwords = sorted(entries.keys(), key=lambda w: (normalize_word(w), w))
     path = output_dir / "index.headwords.txt"
     with open(path, "w", encoding="utf-8") as f:
         for word in headwords:
@@ -596,6 +607,80 @@ def write_manifest(
     print(f"Manifest: {manifest_file}")
 
 
+def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> None:
+    """Полнотекстовый индекс фраз для /phrases: examples + пары word:sense.text.
+
+    direction: "av-en" — word аварский, sense.text английский;
+               "en-av" — word английский, sense.text аварский.
+    Каждая фраза — [word, av, en, comment] (comment: пометы примера + его comment,
+    объединённые через "; "; пустая строка если нет).
+    """
+    phrases: list[list[str]] = []
+    with open(dictionary_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                raw = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            raw = _normalize_raw_entry(raw)
+            word = (raw.get("word") or "").strip()
+            if not word:
+                continue
+            senses = raw.get("senses") or raw.get("translations") or []
+            for sense in senses:
+                if not isinstance(sense, dict):
+                    continue
+                text = (sense.get("text") or "").strip()
+                if text:
+                    if direction == "av-en":
+                        phrases.append([word, word, text, ""])
+                    else:
+                        phrases.append([word, text, word, ""])
+                for ex in sense.get("examples") or []:
+                    av = (ex.get("av") or "").strip()
+                    # av-en uses "en"; tolerate "ru" if a source still has it
+                    en = (ex.get("en") or ex.get("ru") or "").strip()
+                    if not av and not en:
+                        continue
+                    note_parts: list[str] = []
+                    for lab in ex.get("labels") or []:
+                        s = str(lab).strip()
+                        if s and s not in note_parts:
+                            note_parts.append(s)
+                    ex_comment = (ex.get("comment") or "").strip()
+                    if ex_comment and ex_comment not in note_parts:
+                        note_parts.append(ex_comment)
+                    phrases.append([word, av, en, "; ".join(note_parts)])
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    chunks_dir = output_dir / "chunks"
+    chunks_dir.mkdir(parents=True, exist_ok=True)
+    chunk_info: list[dict] = []
+    for i in range(0, len(phrases), PHRASE_CHUNK_SIZE):
+        chunk = phrases[i : i + PHRASE_CHUNK_SIZE]
+        idx = i // PHRASE_CHUNK_SIZE
+        chunk_file = chunks_dir / f"{idx}.json"
+        cj = json.dumps(chunk, ensure_ascii=False, separators=(",", ":"))
+        chunk_file.write_text(cj, encoding="utf-8")
+        chunk_hash = hashlib.md5(cj.encode("utf-8")).hexdigest()[:8]
+        chunk_info.append({"file": f"{idx}.json", "count": len(chunk), "hash": chunk_hash})
+
+    manifest = {
+        "version": "1.0.0",
+        "direction": direction,
+        "total_phrases": len(phrases),
+        "total_chunks": len(chunk_info),
+        "chunks": chunk_info,
+    }
+    (output_dir / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    print(f"Фразы ({direction}): {len(phrases)} → {output_dir} ({len(chunk_info)} чанков)")
+
+
 def build_dictionary(dictionary_path: Path, output_dir: Path, dict_name: str) -> bool:
     print("=" * 60)
     print(f"Build {dict_name} → {output_dir}")
@@ -627,6 +712,10 @@ def main() -> None:
     out = docs_root / "data" / dict_name
     if not build_dictionary(dict_path, out, dict_name):
         sys.exit(1)
+
+    # /phrases — только основной сайт
+    build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
+
     print(f"\nDone: {docs_root}/data/{dict_name}")
 
 

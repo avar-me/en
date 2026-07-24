@@ -140,6 +140,23 @@ function splitStemSuffix(form, stem) {
     return null;
 }
 
+/**
+ * Разбить перевод по ";" на строки — на мобильных короткая колонка
+ * иначе превращает несколько значений в нечитаемую простыню.
+ * ";" и перенос строки переключаются CSS-медиа-запросом (см. .gloss-break,
+ * .gloss-semicolon): на десктопе — "; " как раньше, на мобильных — перенос
+ * строки вместо точки с запятой.
+ */
+function formatGlossMultiline(text) {
+    if (!text) return '';
+    return text
+        .split(';')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .map(escapeHtml)
+        .join('<span class="gloss-semicolon">; </span><br class="gloss-break">');
+}
+
 /** Перевод + помета/комментарий: основной текст и подстрочная строка. */
 function formatGlossWithNote(main, note) {
     const text = main ? (Array.isArray(main) ? main.join('; ') : String(main)) : '';
@@ -280,6 +297,10 @@ function normalizeWord(word) {
     // Include both U+04C0 (Ӏ) and U+04CF (ӏ) for compatibility
     // Added: ! (exclamation), ǀ (latin letter dental click), various other pipe-like chars
     normalized = normalized.replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ');
+    // ё печатают редко — «елка» должно находить «ёлка». Согласовано с
+    // normalize_word() в build_data.py (там же см. про порядок сортировки
+    // индекса — ё вне основного кириллического блока, U+0451, после «я»).
+    normalized = normalized.replace(/ё/g, 'е');
     return normalized;
 }
 
@@ -715,11 +736,16 @@ function renderWordListTable(words, options = {}) {
     const rows = words.map(word => {
         const { g, forms } = getBrowseEntry(word);
         const formsText = formatFormsPreview(word, forms);
+        // На мобильных колонка "Формы" скрыта (styles.css) — формы показываются
+        // мелким шрифтом под словом внутри той же ячейки.
+        const formsInline = formsText
+            ? `<span class="word-list-forms-inline">${escapeHtml(formsText)}</span>`
+            : '';
         return `
             <tr class="word-list-row" data-word="${escapeHtml(word)}" tabindex="0" role="button">
-                <td class="word-list-word">${escapeHtml(word)}</td>
+                <td class="word-list-word">${escapeHtml(word)}${formsInline}</td>
                 <td class="word-list-forms">${escapeHtml(formsText)}</td>
-                <td class="word-list-gloss">${escapeHtml(g)}</td>
+                <td class="word-list-gloss">${formatGlossMultiline(g)}</td>
             </tr>
         `;
     }).join('');
@@ -1091,9 +1117,18 @@ function initEventListeners() {
 async function init() {
     try {
         console.log('Initializing dictionary app...');
-        
+
         showLoading(true);
-        
+
+        // #dict=en-av&word=... — ссылка извне (напр. со страницы /phrases)
+        // указывает, какой словарь открыть, до того как данные загружены.
+        const initialHash = window.location.hash.slice(1);
+        const initialParams = new URLSearchParams(initialHash);
+        const dictParam = initialParams.get('dict');
+        if (dictParam && DICT_TITLES[dictParam]) {
+            state.currentDictType = dictParam;
+        }
+
         // Load initial data
         state.wordsIndex = await loadWordsIndex(state.currentDictType);
         state.headwordsIndex = await loadHeadwordsIndex(state.currentDictType);
@@ -1101,22 +1136,26 @@ async function init() {
         state.formToHeadword = await loadFormToHeadword(state.currentDictType);
         state.browse = await loadBrowse(state.currentDictType);
         state.manifest = await loadManifest(state.currentDictType);
-        
+
         // Mark initial active toggle button
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.type === state.currentDictType);
         });
+        const initialTitle = DICT_TITLES[state.currentDictType];
+        if (initialTitle) {
+            const titleEl = document.getElementById('dictTitle');
+            if (titleEl) titleEl.innerHTML = initialTitle.h1;
+            document.title = initialTitle.doc;
+        }
 
         // Initialize event listeners
         initEventListeners();
-        
+
         showLoading(false);
-        
+
         // Check URL hash for initial word
-        const hash = window.location.hash.slice(1);
-        const params = new URLSearchParams(hash);
-        const word = params.get('word');
-        
+        const word = initialParams.get('word');
+
         if (word) {
             const searchInput = document.getElementById('searchInput');
             searchInput.value = word;

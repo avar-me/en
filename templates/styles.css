@@ -403,10 +403,21 @@ a:hover {
   min-width: 6rem;
 }
 
+/* Дублирует .word-list-forms под словом — видно только на мобильных (RESPONSIVE) */
+.word-list-forms-inline {
+  display: none;
+}
+
 .word-list-gloss {
   font-family: var(--font-serif);
   color: var(--text);
   line-height: 1.45;
+}
+
+/* На десктопе перевод — строкой через "; "; на мобильных переключается
+   в перенос строки без ";" (см. RESPONSIVE) */
+.gloss-break {
+  display: none;
 }
 
 /* ============================================================================
@@ -506,6 +517,145 @@ a:hover {
 
 .gender-form-chip {
   cursor: pointer;
+}
+
+/* ============================================================================
+   PHRASES PAGE (/phrases)
+   ============================================================================ */
+
+.phrases-subtitle {
+  margin-top: 0.6rem;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.phrase-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.phrase-section-title {
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.phrase-table-caption {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.phrase-header-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem 1rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.phrase-list {
+  border: 1px solid var(--border);
+  border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.phrase-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.4rem 1rem;
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  align-items: start;
+}
+
+.phrase-row:last-child {
+  border-bottom: none;
+}
+
+.phrase-cell {
+  line-height: 1.45;
+  font-size: 0.9375rem;
+}
+
+.phrase-cell-a {
+  font-family: var(--font-serif);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.phrase-cell-b {
+  color: var(--text-muted);
+}
+
+.phrase-comment {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  font-style: italic;
+  margin-top: 0.1rem;
+}
+
+.phrase-link {
+  align-self: start;
+  font-size: 0.8rem;
+  color: var(--link);
+  white-space: nowrap;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.phrase-link:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.phrase-hl {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 0 0.1em;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.phrase-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+@media (max-width: 600px) {
+  .phrase-header-row {
+    display: none;
+  }
+
+  .phrase-row {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .phrase-link {
+    justify-self: start;
+  }
 }
 
 /* ============================================================================
@@ -846,6 +996,31 @@ a:hover {
 
   .word-list-word {
     white-space: normal;
+  }
+
+  /* Формы съедали половину ширины узкого экрана — прячем колонку,
+     показываем формы мелким текстом под словом (word-list-forms-inline). */
+  .word-list thead th:nth-child(2),
+  .word-list-forms {
+    display: none;
+  }
+
+  .word-list-forms-inline {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--text-muted);
+    white-space: normal;
+  }
+
+  /* Перевод: ";" заменяется переносом строки — читать проще в узкой колонке */
+  .gloss-break {
+    display: revert;
+  }
+
+  .gloss-semicolon {
+    display: none;
   }
 }
 

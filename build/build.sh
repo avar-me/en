@@ -36,6 +36,8 @@ cp "$TEMPLATES_DIR/robots.txt" "$OUTPUT_DIR/"
 cp "$TEMPLATES_DIR/sitemap.xml" "$OUTPUT_DIR/"
 cp "$TEMPLATES_DIR/app.js" "$OUTPUT_DIR/"
 cp "$TEMPLATES_DIR/index.html" "$OUTPUT_DIR/"
+cp "$TEMPLATES_DIR/phrases.html" "$OUTPUT_DIR/"
+cp "$TEMPLATES_DIR/phrases.js" "$OUTPUT_DIR/"
 
 cp "$ASSETS_DIR/avar.me.png" "$OUTPUT_DIR/"
 cp "$ASSETS_DIR/og-image.jpg" "$OUTPUT_DIR/"
@@ -64,7 +66,7 @@ from pathlib import Path
 docs = Path(os.environ["DOCS_ROOT"])
 manifest = json.loads((docs / "data/av-en/manifest.json").read_text(encoding="utf-8"))
 build_id = manifest.get("build_id") or "build"
-for name in ("index.html", "app.js", "styles.css"):
+for name in ("index.html", "app.js", "styles.css", "phrases.html", "phrases.js"):
     path = docs / name
     text = path.read_text(encoding="utf-8")
     if "__ASSET_VERSION__" in text:
