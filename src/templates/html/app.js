@@ -1,11 +1,26 @@
 /**
- * English–Avar dictionary (en.avar.me)
+ * Avar-Russian dictionary (dev.avar.me)
  * Static client; UI strings are UTF-8
  */
 
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
+
+function getSite() {
+    const s = typeof window !== 'undefined' ? window.__SITE__ : null;
+    if (s && Array.isArray(s.dicts) && s.dicts.length >= 2) return s;
+    return {
+        id: 'ru',
+        host: 'dev.avar.me',
+        dicts: [
+            { id: 'av-ru', label: 'Авар → Рус', title: 'Аварско-русский словарь — dev.avar.me', shortAv: 'Авар', shortXx: 'Рус', avFirst: true },
+            { id: 'ru-av', label: 'Рус → Авар', title: 'Русско-аварский словарь — dev.avar.me', shortAv: 'Авар', shortXx: 'Рус', avFirst: false },
+        ],
+    };
+}
+
+const SITE = getSite();
 
 const CONFIG = {
     MAX_SUGGESTIONS: 20,
@@ -14,7 +29,7 @@ const CONFIG = {
     HOME_SAMPLES: 14,
     DEBOUNCE_DELAY: 150,
     CHUNK_CACHE_SIZE: 50,
-    DEFAULT_DICT_TYPE: 'av-en'
+    DEFAULT_DICT_TYPE: SITE.dicts[0].id
 };
 
 /** Подставляется при сборке (index.html); сбрасывает кэш Cloudflare для data/*. */
@@ -72,10 +87,7 @@ function escapeHtml(text) {
 /** Служебные метки омонимов не показываем (номер омонима не выводится в UI). */
 function isHomonymLabel(label) {
     const s = String(label).trim().toLowerCase().replace(/\s+/g, '');
-    return (
-        s === 'омоним' || (s.startsWith('омоним') && /^\d+$/.test(s.slice(6))) ||
-        s === 'homonym' || (s.startsWith('homonym') && /^\d+$/.test(s.slice(7)))
-    );
+    return s === 'омоним' || (s.startsWith('омоним') && /^\d+$/.test(s.slice(6)));
 }
 
 function filterDisplayLabels(labels) {
@@ -168,12 +180,12 @@ function formatGlossWithNote(main, note) {
     return `${mainHtml}<span class="gloss-sub">${escapeHtml(note)}</span>`;
 }
 
-function exampleGlossParts(ex) {
-    const gloss = ex.en || ex.ru || '';
-    if (ex.note) return { gloss, note: ex.note };
-    const m = gloss.match(/^(.+?)\s+\(([^)]+)\)\s*$/);
-    if (m) return { gloss: m[1].trim(), note: m[2].trim() };
-    return { gloss, note: null };
+function exampleRuParts(ex) {
+    if (ex.note) return { ru: ex.ru || '', note: ex.note };
+    const ru = ex.ru || '';
+    const m = ru.match(/^(.+?)\s+\(([^)]+)\)\s*$/);
+    if (m) return { ru: m[1].trim(), note: m[2].trim() };
+    return { ru, note: null };
 }
 
 function formatFormDisplay(form, headword, stem, stress) {
@@ -323,7 +335,7 @@ async function loadWordsIndex(dictType) {
         return words;
     } catch (error) {
         console.error('Error loading words index:', error);
-        throw new Error('Failed to load word index');
+        throw new Error('Не удалось загрузить индекс слов');
     }
 }
 
@@ -420,7 +432,7 @@ async function loadManifest(dictType) {
         return manifest;
     } catch (error) {
         console.error('Error loading manifest:', error);
-        throw new Error('Failed to load manifest');
+        throw new Error('Не удалось загрузить манифест');
     }
 }
 
@@ -451,7 +463,7 @@ async function loadChunk(dictType, chunkFile) {
         return data;
     } catch (error) {
         console.error(`Error loading chunk ${chunkFile}:`, error);
-        throw new Error(`Failed to load data for "${chunkFile}"`);
+        throw new Error(`Не удалось загрузить данные для "${chunkFile}"`);
     }
 }
 
@@ -544,12 +556,12 @@ function renderWordCard(wordData) {
     html += `<div class="word-title-row">`;
     html += `<h2 class="word-title">${escapeHtml(wordData.word)}</h2>`;
     if (wordData.exclamation) {
-        html += `<span class="word-excl" title="Exclamatory form">${escapeHtml(wordData.exclamation)}</span>`;
+        html += `<span class="word-excl" title="Восклицательная форма">${escapeHtml(wordData.exclamation)}</span>`;
     }
     html += `</div>`;
     if (wordData.gender_forms && wordData.gender_forms.length > 0) {
         html += '<div class="word-gender-forms">';
-        html += '<span class="forms-label">Gender forms:</span> ';
+        html += '<span class="forms-label">По родам:</span> ';
         html += wordData.gender_forms
             .map((form, i) => {
                 const hint = GENDER_FORM_HINTS[i] || '';
@@ -592,7 +604,7 @@ function renderWordCard(wordData) {
             // Forms (формы слова)
             if (result.forms && result.forms.length > 0) {
                 html += '<div class="result-forms">';
-                html += '<span class="forms-label">Forms:</span> ';
+                html += '<span class="forms-label">Формы:</span> ';
                 html += result.forms
                     .map(form => {
                         const inner = formatFormDisplay(
@@ -609,11 +621,11 @@ function renderWordCard(wordData) {
                 html += '<div class="result-examples">';
                 html += result.examples
                     .map(ex => {
-                        if (typeof ex === 'object' && ex !== null && ex.av && (ex.en || ex.ru || ex.note)) {
-                            const { gloss, note } = exampleGlossParts(ex);
+                        if (typeof ex === 'object' && ex !== null && ex.av && (ex.ru || ex.note)) {
+                            const { ru, note } = exampleRuParts(ex);
                             return `<div class="example-item example-grid">` +
                                    `<span class="example-av">${escapeHtml(ex.av)}</span>` +
-                                   `<span class="example-en">${formatGlossWithNote(gloss, note)}</span>` +
+                                   `<span class="example-ru">${formatGlossWithNote(ru, note)}</span>` +
                                    `</div>`;
                         }
                         // Fallback for old format or if only one part exists
@@ -640,7 +652,7 @@ function renderWordCard(wordData) {
             // Lookup (связанные слова)
             if (result.lookup && result.lookup.length > 0) {
                 html += '<div class="result-lookup">';
-                html += '<span class="lookup-label">See also:</span> ';
+                html += '<span class="lookup-label">См. также:</span> ';
                 html += result.lookup
                     .map(word => `<span class="lookup-link" data-word="${escapeHtml(word)}">${escapeHtml(word)}</span>`)
                     .join(', ');
@@ -693,8 +705,8 @@ function renderNotFound() {
                 <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="2"/>
                 <path d="M24 16v12M24 32v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <p>No results found</p>
-            <p class="no-results-hint">Try a different search</p>
+            <p>Ничего не найдено</p>
+            <p class="no-results-hint">Попробуйте изменить запрос</p>
         </div>
     `;
     resultsEl.style.display = 'block';
@@ -760,9 +772,9 @@ function renderWordListTable(words, options = {}) {
             <table class="word-list">
                 <thead>
                     <tr>
-                        <th>Word</th>
-                        <th>Forms</th>
-                        <th>Translation</th>
+                        <th>Слово</th>
+                        <th>Формы</th>
+                        <th>Перевод</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -779,8 +791,8 @@ function renderPrefixList(query, headwords) {
     const randomSection = document.getElementById('randomWordsSection');
     const caption =
         headwords.length >= CONFIG.MAX_PREFIX_LIST
-            ? `Words starting with “${query}” (showing first ${CONFIG.MAX_PREFIX_LIST})`
-            : `Words starting with “${query}” — ${headwords.length}`;
+            ? `Слова на «${query}» (показаны первые ${CONFIG.MAX_PREFIX_LIST})`
+            : `Слова на «${query}» — ${headwords.length}`;
 
     resultsEl.innerHTML = renderWordListTable(headwords, { caption });
     resultsEl.style.display = 'block';
@@ -850,7 +862,7 @@ function updateSearchStats(query, resultsCount) {
     }
     
     if (resultsCount === 0) {
-        statsEl.textContent = `No results for “${query}”`;
+        statsEl.textContent = `Ничего не найдено для "${query}"`;
     } else {
         statsEl.textContent = '';
     }
@@ -948,16 +960,17 @@ async function loadAndDisplayWord(word) {
 // DICTIONARY TYPE SWITCHING
 // ============================================================================
 
-const DICT_TITLES = {
-    'av-en': { h1: 'Avar–English<br><span class="dot">Dictionary</span>', doc: 'Avar–English Dictionary — en.avar.me' },
-    'en-av': { h1: 'English–Avar<br><span class="dot">Dictionary</span>', doc: 'English–Avar Dictionary — en.avar.me' },
-};
+const DICT_TITLES = Object.fromEntries(
+    SITE.dicts.map((d) => [d.id, { doc: d.title }])
+);
 
 /**
- * Switch dictionary type (en-av / av-en)
+ * Switch dictionary type (av-ru / ru-av)
  */
 async function switchDictType(newType) {
     if (newType === state.currentDictType) return;
+
+    const searchInput = document.getElementById('searchInput');
 
     try {
         showLoading(true);
@@ -973,9 +986,8 @@ async function switchDictType(newType) {
         state.browse = await loadBrowse(newType);
         state.manifest = await loadManifest(newType);
 
-        // Clear cache and results
+        // Clear cache
         state.chunkCache.clear();
-        clearSearchView();
 
         // Update UI
         document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -983,14 +995,20 @@ async function switchDictType(newType) {
         });
         const t = DICT_TITLES[newType];
         if (t) {
-            const titleEl = document.getElementById('dictTitle');
-            if (titleEl) titleEl.innerHTML = t.h1;
             document.title = t.doc;
         }
 
-        // Clear search input
-        const searchInput = document.getElementById('searchInput');
-        searchInput.value = '';
+        // Строка поиска могла быть заполнена и до переключения, и во время
+        // загрузки нового словаря — в обоих случаях не затираем её, а ищем
+        // введённый запрос уже в новом словаре. Чистим только пустое поле.
+        const query = searchInput.value.trim();
+        if (query) {
+            const clearBtn = document.getElementById('clearBtn');
+            if (clearBtn) clearBtn.style.display = 'block';
+            handleSearchInput(query);
+        } else {
+            clearSearchView();
+        }
         searchInput.focus();
 
         showLoading(false);
@@ -1120,7 +1138,7 @@ async function init() {
 
         showLoading(true);
 
-        // #dict=en-av&word=... — ссылка извне (напр. со страницы /phrases)
+        // #dict=ru-av&word=... — ссылка извне (напр. со страницы /phrases)
         // указывает, какой словарь открыть, до того как данные загружены.
         const initialHash = window.location.hash.slice(1);
         const initialParams = new URLSearchParams(initialHash);
@@ -1143,8 +1161,6 @@ async function init() {
         });
         const initialTitle = DICT_TITLES[state.currentDictType];
         if (initialTitle) {
-            const titleEl = document.getElementById('dictTitle');
-            if (titleEl) titleEl.innerHTML = initialTitle.h1;
             document.title = initialTitle.doc;
         }
 
@@ -1172,7 +1188,7 @@ async function init() {
     } catch (error) {
         console.error('Initialization error:', error);
         showLoading(false);
-        showError('Failed to initialize: ' + error.message);
+        showError('Ошибка инициализации приложения: ' + error.message);
     }
 }
 

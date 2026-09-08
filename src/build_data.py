@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Сборка статических данных словаря для en.avar.me.
+Сборка статических данных словаря для dev.avar.me.
 
-Источники — av-en.jsonl / en-av.jsonl с sources.avar.me (скачиваются в build.sh).
-Результат:
+Источник данных — av-ru.jsonl с sources.avar.me (скачивается в build.sh).
+Запись результатов:
 
-  dist/data/{av-en|en-av}/{index.words.txt,chunks/*.json,manifest.json,…}
+  docs/data/av-ru/{index.words.txt,chunks/*.json,manifest.json,…}
+  docs/tma/data/av-ru/  — то же для Telegram Mini App
 
-Переменные окружения: DICTIONARY_JSONL, DOCS_ROOT, DICT_NAME.
+Путь к JSONL и корень вывода настраиваются переменными окружения
+DICTIONARY_JSONL и DOCS_ROOT.
 """
 
 from __future__ import annotations
@@ -25,8 +27,8 @@ PHRASE_CHUNK_SIZE = 4000
 
 # repo/src/build_data.py → parents[1] = корень репозитория
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DICTIONARY = REPO_ROOT / "av-en.jsonl"
-DEFAULT_DOCS = REPO_ROOT / "dist"
+DEFAULT_DICTIONARY = REPO_ROOT / "av-ru.jsonl"
+DEFAULT_DOCS = REPO_ROOT / "docs"
 
 
 def normalize_word(word: str) -> str:
@@ -67,17 +69,14 @@ def _clean_comment_for_site(comment: str) -> str:
 
 
 def _filter_display_labels(labels: list) -> list[str]:
-    """Drop homonym service labels — number already in `homonym`."""
+    """Убрать служебные метки омонимов (омоним 1, омоним2, …) — номер уже в поле homonym."""
     out: list[str] = []
     for lab in labels:
         s = str(lab).strip()
         if not s:
             continue
         low = s.casefold().replace(" ", "")
-        if low in ("омоним", "homonym") or (
-            (low.startswith("омоним") and low[6:].isdigit())
-            or (low.startswith("homonym") and low[7:].isdigit())
-        ):
+        if low == "омоним" or (low.startswith("омоним") and low[6:].isdigit()):
             continue
         if s not in out:
             out.append(s)
@@ -135,20 +134,20 @@ def _filter_lookup_against_relations(lookup: list[str], results: list[dict]) -> 
     return out
 
 
-# Mapping of sense relation fields → English display labels
+# Mapping of sense relation fields → Russian display labels
 _RELATION_FIELDS: list[tuple[str, str]] = [
-    ("masdarfrom",    "masdar of"),
-    ("masdarforceto", "causative masdar of"),
-    ("genitivefrom",  "genitive of"),
-    ("pluralfor",     "plural of"),
-    ("forceto",       "causative of"),
-    ("participlefrom","participle of"),
-    ("deverbfrom",    "deverbal of"),
-    ("locativefrom",  "locative of"),
-    ("dativefrom",    "dative of"),
-    ("ergativefrom",  "ergative of"),
-    ("casefrom",      "case of"),
-    ("ablativefrom",  "ablative of"),
+    ("masdarfrom",    "масдар от"),
+    ("masdarforceto", "масдар понуд. к"),
+    ("genitivefrom",  "род. пад. от"),
+    ("pluralfor",     "мн. ч. от"),
+    ("forceto",       "понуд. к"),
+    ("participlefrom","прич. от"),
+    ("deverbfrom",    "девербатив от"),
+    ("locativefrom",  "мест. пад. от"),
+    ("dativefrom",    "дат. пад. от"),
+    ("ergativefrom",  "эрг. пад. от"),
+    ("casefrom",      "пад. от"),
+    ("ablativefrom",  "отл. пад. от"),
 ]
 
 
@@ -180,8 +179,7 @@ def _sense_to_result(
     examples_out: list[dict] = []
     for ex in sense.get("examples") or []:
         av = (ex.get("av") or "").strip()
-        # av-en uses "en"; tolerate "ru" if a source still has it
-        gloss = (ex.get("en") or ex.get("ru") or "").strip()
+        ru = (ex.get("ru") or "").strip()
         note_parts: list[str] = []
         for lab in ex.get("labels") or []:
             if lab and str(lab).strip() and str(lab).strip() not in note_parts:
@@ -189,8 +187,8 @@ def _sense_to_result(
         ex_comm = (ex.get("comment") or "").strip()
         if ex_comm and ex_comm not in note_parts:
             note_parts.append(ex_comm)
-        if av or gloss or note_parts:
-            item: dict = {"av": av, "en": gloss}
+        if av or ru or note_parts:
+            item: dict = {"av": av, "ru": ru}
             if note_parts:
                 item["note"] = "; ".join(note_parts)
             examples_out.append(item)
@@ -222,40 +220,14 @@ def _sense_to_result(
     return out
 
 
-def _normalize_raw_entry(raw: dict) -> dict:
-    """Upgrade simple en-av rows `{word,pos,avar}` to the rich sense schema."""
-    if raw.get("senses") or raw.get("translations"):
-        return raw
-    avar = (raw.get("avar") or "").strip()
-    if not avar:
-        return raw
-    word = (raw.get("word") or "").strip()
-    pos = (raw.get("pos") or "").strip()
-    sense: dict = {"text": avar}
-    if pos:
-        sense["labels"] = [pos]
-    upgraded = {
-        "word": word,
-        "forms": [word] if word else [],
-        "senses": [sense],
-    }
-    if pos:
-        upgraded["pos"] = pos
-    return upgraded
-
-
 def convert_entry(raw: dict) -> dict:
-    """One JSONL row → frontend entry format."""
-    raw = _normalize_raw_entry(raw)
+    """Одна строка dictionary.jsonl → формат фронтенда (как в legacy av-ru JSONL)."""
     word = (raw.get("word") or "").strip()
     forms = [str(f).strip() for f in (raw.get("forms") or []) if f and str(f).strip()]
     gender_forms = [
         str(f).strip() for f in (raw.get("gender_forms") or []) if f and str(f).strip()
     ]
     entry_labels = _filter_display_labels(list(raw.get("labels") or []))
-    pos = (raw.get("pos") or "").strip()
-    if pos and pos not in entry_labels:
-        entry_labels = [pos] + entry_labels
 
     translations = raw.get("senses") or raw.get("translations") or []
     results: list[dict] = []
@@ -607,14 +579,23 @@ def write_manifest(
     print(f"Manifest: {manifest_file}")
 
 
+def _direction_parts(direction: str) -> tuple[str, bool]:
+    """('ru', True) для av-ru; ('en', False) для en-av."""
+    left, right = direction.split("-", 1)
+    av_first = left == "av"
+    target = right if av_first else left
+    return target, av_first
+
+
 def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> None:
     """Полнотекстовый индекс фраз для /phrases: examples + пары word:sense.text.
 
-    direction: "av-en" — word аварский, sense.text английский;
-               "en-av" — word английский, sense.text аварский.
-    Каждая фраза — [word, av, en, comment] (comment: пометы примера + его comment,
-    объединённые через "; "; пустая строка если нет).
+    direction: "av-xx" — word аварский, sense.text на языке xx;
+               "xx-av" — word на xx, sense.text аварский.
+    Каждая фраза — [word, av, xx, comment]. В examples ищется поле языка
+    (en/tr/…) и запасной ключ ru — так в источниках часто лежит второй язык.
     """
+    target, av_first = _direction_parts(direction)
     phrases: list[list[str]] = []
     with open(dictionary_path, encoding="utf-8") as f:
         for line in f:
@@ -625,26 +606,27 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                 raw = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            raw = _normalize_raw_entry(raw)
             word = (raw.get("word") or "").strip()
             if not word:
                 continue
             senses = raw.get("senses") or raw.get("translations") or []
+            word_has_phrase = False
             for sense in senses:
                 if not isinstance(sense, dict):
                     continue
                 text = (sense.get("text") or "").strip()
                 if text:
-                    if direction == "av-en":
+                    word_has_phrase = True
+                    if av_first:
                         phrases.append([word, word, text, ""])
                     else:
                         phrases.append([word, text, word, ""])
                 for ex in sense.get("examples") or []:
                     av = (ex.get("av") or "").strip()
-                    # av-en uses "en"; tolerate "ru" if a source still has it
-                    en = (ex.get("en") or ex.get("ru") or "").strip()
-                    if not av and not en:
+                    xx = (ex.get(target) or ex.get("ru") or "").strip()
+                    if not av and not xx:
                         continue
+                    word_has_phrase = True
                     note_parts: list[str] = []
                     for lab in ex.get("labels") or []:
                         s = str(lab).strip()
@@ -653,7 +635,30 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
                     ex_comment = (ex.get("comment") or "").strip()
                     if ex_comment and ex_comment not in note_parts:
                         note_parts.append(ex_comment)
-                    phrases.append([word, av, en, "; ".join(note_parts)])
+                    phrases.append([word, av, xx, "; ".join(note_parts)])
+            if not word_has_phrase:
+                # Статьи без sense.text и examples («см.», масдары, формы от
+                # других слов) иначе выпадали из индекса — само слово было
+                # ненаходимо через /phrases.
+                if av_first:
+                    phrases.append([word, word, "", ""])
+                else:
+                    phrases.append([word, "", word, ""])
+
+            # Словоформы (напр. «лагънаялъ» для «лагъна») — иначе находится
+            # только заглавная форма, а склонения/спряжения в /phrases не
+            # ищутся вовсе.
+            seen_forms = {word}
+            for f in raw.get("forms") or []:
+                f = str(f).strip()
+                if not f or f in seen_forms:
+                    continue
+                seen_forms.add(f)
+                comment = f"форма слова «{word}»"
+                if av_first:
+                    phrases.append([word, f, "", comment])
+                else:
+                    phrases.append([word, "", f, comment])
 
     output_dir.mkdir(parents=True, exist_ok=True)
     chunks_dir = output_dir / "chunks"
@@ -681,13 +686,13 @@ def build_phrases(dictionary_path: Path, direction: str, output_dir: Path) -> No
     print(f"Фразы ({direction}): {len(phrases)} → {output_dir} ({len(chunk_info)} чанков)")
 
 
-def build_dictionary(dictionary_path: Path, output_dir: Path, dict_name: str) -> bool:
+def build_av_ru(dictionary_path: Path, output_dir: Path) -> bool:
     print("=" * 60)
-    print(f"Build {dict_name} → {output_dir}")
+    print(f"Сборка {output_dir.name} → {output_dir}")
     print("=" * 60)
     entries, form_map = load_dictionary(dictionary_path)
     if not entries:
-        print("No entries.", file=sys.stderr)
+        print("Нет записей.", file=sys.stderr)
         return False
     words = create_index(entries)
     chunks = split_into_chunks(entries, words, form_map)
@@ -704,19 +709,26 @@ def build_dictionary(dictionary_path: Path, output_dir: Path, dict_name: str) ->
 def main() -> None:
     dict_path = Path(os.environ.get("DICTIONARY_JSONL", DEFAULT_DICTIONARY)).resolve()
     if not dict_path.is_file():
-        print(f"File not found: {dict_path}", file=sys.stderr)
+        print(f"Файл не найден: {dict_path}", file=sys.stderr)
         sys.exit(1)
 
     docs_root = Path(os.environ.get("DOCS_ROOT", DEFAULT_DOCS)).resolve()
-    dict_name = os.environ.get("DICT_NAME", "av-en")
-    out = docs_root / "data" / dict_name
-    if not build_dictionary(dict_path, out, dict_name):
+    dict_name = os.environ.get("DICT_NAME", "av-ru")
+    targets = [
+        docs_root / "data" / dict_name,
+        docs_root / "tma" / "data" / dict_name,
+    ]
+    ok = 0
+    for out in targets:
+        if build_av_ru(dict_path, out):
+            ok += 1
+    if ok != len(targets):
         sys.exit(1)
 
-    # /phrases — только основной сайт
+    # /phrases — только основной сайт, TMA не нужен
     build_phrases(dict_path, dict_name, docs_root / "data" / "phrases" / dict_name)
 
-    print(f"\nDone: {docs_root}/data/{dict_name}")
+    print(f"\nГотово: {docs_root.name}/data/{dict_name} и {docs_root.name}/tma/data/{dict_name}")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,0 @@
-# robots.txt for en.avar.me
-User-agent: *
-Allow: /
-
-# Sitemap location
-Sitemap: https://en.avar.me/sitemap.xml
-
-# Crawl-delay (optional, for polite crawling)
-Crawl-delay: 1

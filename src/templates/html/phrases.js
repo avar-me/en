@@ -1,7 +1,22 @@
 /**
- * Phrase search (en.avar.me/phrases.html)
- * Full-text search over examples and sense text of both dictionaries (av-en, en-av).
+ * Поиск по фразам (dev.avar.me/phrases.html)
+ * Полнотекстовый поиск по examples и sense.text обоих словарей (av-ru, ru-av).
  */
+
+function getSite() {
+    const s = typeof window !== 'undefined' ? window.__SITE__ : null;
+    if (s && Array.isArray(s.dicts) && s.dicts.length >= 2) return s;
+    return {
+        id: 'ru',
+        host: 'dev.avar.me',
+        dicts: [
+            { id: 'av-ru', label: 'Авар → Рус', shortAv: 'Авар', shortXx: 'Рус', avFirst: true },
+            { id: 'ru-av', label: 'Рус → Авар', shortAv: 'Авар', shortXx: 'Рус', avFirst: false },
+        ],
+    };
+}
+
+const SITE = getSite();
 
 const CONFIG = {
     MIN_QUERY_LEN: 2,
@@ -9,7 +24,7 @@ const CONFIG = {
     MAX_RESULTS: 200,
 };
 
-/** Substituted at build time (phrases.html); busts Cloudflare cache for data/*. */
+/** Подставляется при сборке (phrases.html); сбрасывает кэш Cloudflare для data/*. */
 const ASSET_VERSION = (typeof window !== 'undefined' && window.__DICT_ASSET_V__) || '';
 
 function assetUrl(path) {
@@ -24,15 +39,15 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-/** Consistent with normalizeWord() in app.js and normalize_word() in build_data.py. */
+/** Согласовано с normalizeWord() в app.js и normalize_word() в build_data.py. */
 function normalizeQuery(word) {
     return word.toLowerCase().trim().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ').replace(/ё/g, 'е');
 }
 
 /**
- * No .trim() — keeps a 1:1 mapping between character indices and the
- * original phrase text, needed for match highlighting (highlightMatch).
- * ё->е is also 1:1 in length, so indices don't shift.
+ * Без .trim() — сохраняет 1:1 соответствие индексов символов с исходным
+ * текстом фразы, это нужно для подсветки совпадения (highlightMatch).
+ * ё->е тоже 1:1 по длине, индексы не сдвигаются.
  */
 function normalizeText(s) {
     return s.toLowerCase().replace(/[1IiｌlL|!ǀӀІ]/g, 'ӏ').replace(/ё/g, 'е');
@@ -59,13 +74,13 @@ function debounce(func, delay) {
 }
 
 const state = {
-    avEn: null,
-    enAv: null,
+    fwd: null,
+    rev: null,
 };
 
 /**
- * Download all phrase chunks for a dictionary and build a flat index with
- * precomputed normalized fields (for fast substring search).
+ * Скачать все чанки фраз для словаря и собрать плоский индекс с
+ * предпосчитанными нормализованными полями (для быстрого поиска подстроки).
  */
 async function loadPhraseSet(dictName) {
     const manifestRes = await fetch(assetUrl(`data/phrases/${dictName}/manifest.json`));
@@ -81,14 +96,14 @@ async function loadPhraseSet(dictName) {
     );
 
     const records = chunkArrays.flat();
-    return records.map(([w, av, en, c]) => {
+    return records.map(([w, av, ru, c]) => {
         const avNorm = normalizeText(av);
-        const enNorm = normalizeText(en);
-        return { w, av, en, c, avNorm, enNorm, combined: avNorm + '' + enNorm };
+        const ruNorm = normalizeText(ru);
+        return { w, av, ru, c, avNorm, ruNorm, combined: avNorm + '' + ruNorm };
     });
 }
 
-/** Full scan over the index — size (tens of thousands of entries) makes caching partial slices unnecessary. */
+/** Полный проход по индексу — размер (60-90k записей) позволяет не кэшировать частичные срезы. */
 function searchPhrases(index, queryNorm, limit) {
     const results = [];
     let total = 0;
@@ -107,19 +122,19 @@ function wordLink(word, dict) {
 }
 
 function renderRows(items, dict, queryNorm, reversed) {
-    if (!items.length) return '<p class="phrase-empty">No results found</p>';
+    if (!items.length) return '<p class="phrase-empty">Ничего не найдено</p>';
     const rows = items
         .map((item) => {
             const avHtml = highlightMatch(item.av, item.avNorm, queryNorm);
-            const enHtml = highlightMatch(item.en, item.enNorm, queryNorm);
-            const leftHtml = reversed ? enHtml : avHtml;
-            const rightHtml = reversed ? avHtml : enHtml;
+            const ruHtml = highlightMatch(item.ru, item.ruNorm, queryNorm);
+            const leftHtml = reversed ? ruHtml : avHtml;
+            const rightHtml = reversed ? avHtml : ruHtml;
             const commentHtml = item.c ? `<div class="phrase-comment">${escapeHtml(item.c)}</div>` : '';
             return `
                 <div class="phrase-row">
                     <div class="phrase-cell phrase-cell-a">${leftHtml}</div>
                     <div class="phrase-cell phrase-cell-b">${rightHtml}</div>
-                    <a class="phrase-link" href="${wordLink(item.w, dict)}" title="Open entry “${escapeHtml(item.w)}”">${escapeHtml(item.w)}</a>
+                    <a class="phrase-link" href="${wordLink(item.w, dict)}" title="Открыть статью «${escapeHtml(item.w)}»">${escapeHtml(item.w)}</a>
                     ${commentHtml}
                 </div>
             `;
@@ -137,25 +152,30 @@ function renderSection(containerId, index, dict, queryNorm, reversed, leftLabel,
     const { results, total } = searchPhrases(index, queryNorm, CONFIG.MAX_RESULTS);
     const caption =
         total > CONFIG.MAX_RESULTS
-            ? `Found ${total} · showing first ${CONFIG.MAX_RESULTS}`
-            : `Found ${total}`;
+            ? `Найдено ${total} · показаны первые ${CONFIG.MAX_RESULTS}`
+            : `Найдено ${total}`;
     const header = `
         <div class="phrase-header-row">
             <div>${escapeHtml(leftLabel)}</div>
             <div>${escapeHtml(rightLabel)}</div>
-            <div>Word</div>
+            <div>Слово</div>
         </div>
     `;
     container.innerHTML = `<p class="phrase-table-caption">${caption}</p>${header}${renderRows(results, dict, queryNorm, reversed)}`;
 }
 
+function sectionLabels(dict) {
+    if (dict.avFirst) return [dict.shortAv, dict.shortXx, false];
+    return [dict.shortXx, dict.shortAv, true];
+}
+
 function renderEmptyState() {
-    document.getElementById('tableAvEn').innerHTML = '';
-    document.getElementById('tableEnAv').innerHTML = '';
+    document.getElementById('tableAvRu').innerHTML = '';
+    document.getElementById('tableRuAv').innerHTML = '';
     document.getElementById('phraseStats').textContent = '';
 }
 
-/** #text=... in the URL — so a search result can be shared as a link. */
+/** #text=... в URL — чтобы на найденную фразу можно было дать ссылку. */
 function updateHash(query) {
     const url = query
         ? `${window.location.pathname}${window.location.search}#text=${encodeURIComponent(query)}`
@@ -167,13 +187,16 @@ function runSearch(query) {
     const statsEl = document.getElementById('phraseStats');
     if (!query || query.length < CONFIG.MIN_QUERY_LEN) {
         renderEmptyState();
-        if (query) statsEl.textContent = `Type ${CONFIG.MIN_QUERY_LEN - query.length} more character(s)`;
+        if (query) statsEl.textContent = `Введите ещё ${CONFIG.MIN_QUERY_LEN - query.length} симв.`;
         return;
     }
     statsEl.textContent = '';
     const queryNorm = normalizeQuery(query);
-    renderSection('tableAvEn', state.avEn, 'av-en', queryNorm, false, 'Avar', 'English');
-    renderSection('tableEnAv', state.enAv, 'en-av', queryNorm, true, 'English', 'Avar');
+    const [fwd, rev] = SITE.dicts;
+    const [fwdL, fwdR, fwdRev] = sectionLabels(fwd);
+    const [revL, revR, revRev] = sectionLabels(rev);
+    renderSection('tableAvRu', state.fwd, fwd.id, queryNorm, fwdRev, fwdL, fwdR);
+    renderSection('tableRuAv', state.rev, rev.id, queryNorm, revRev, revL, revR);
 }
 
 const handleInput = debounce((query) => {
@@ -206,13 +229,17 @@ async function init() {
 
     showLoading(true);
     try {
-        const [avEn, enAv] = await Promise.all([loadPhraseSet('av-en'), loadPhraseSet('en-av')]);
-        state.avEn = avEn;
-        state.enAv = enAv;
-        console.log(`Phrases loaded: av-en=${avEn.length}, en-av=${enAv.length}`);
+        const [fwd, rev] = SITE.dicts;
+        const [fwdIndex, revIndex] = await Promise.all([
+            loadPhraseSet(fwd.id),
+            loadPhraseSet(rev.id),
+        ]);
+        state.fwd = fwdIndex;
+        state.rev = revIndex;
+        console.log(`Phrases loaded: ${fwd.id}=${fwdIndex.length}, ${rev.id}=${revIndex.length}`);
     } catch (error) {
         console.error('Error loading phrases:', error);
-        showError('Failed to load phrase search data');
+        showError('Не удалось загрузить данные для поиска по фразам');
     }
     showLoading(false);
 
@@ -241,8 +268,8 @@ async function init() {
         input.focus();
     });
 
-    // Browser back/forward — while the field is focused the user is typing
-    // and updates the hash themselves via updateHash(); don't interrupt that.
+    // Назад/вперёд в браузере — пока поле в фокусе, значит пользователь
+    // печатает и сам обновляет хэш через updateHash(); не перебиваем его.
     window.addEventListener('hashchange', () => {
         if (document.activeElement === input) return;
         const query = readHashQuery();
@@ -251,7 +278,7 @@ async function init() {
         runSearch(query);
     });
 
-    // #text=... in the link — show the result right away
+    // #text=... в ссылке — сразу показать результат
     const initialQuery = readHashQuery();
     if (initialQuery) {
         input.value = initialQuery;

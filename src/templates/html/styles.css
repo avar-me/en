@@ -8,21 +8,23 @@
    ============================================================================ */
 
 :root {
-  --bg-deep:        #f5f7f5;
+  --bg-deep:        #f4f1ea;
   --bg-card:        #ffffff;
-  --bg-card-hover:  #eef3ee;
-  --bg-secondary:   #e8efe8;
+  --bg-card-hover:  #faf8f4;
+  --bg-secondary:   #f0ece2;
 
   --text:           #1c2229;
   --text-muted:     #5a6570;
   --text-light:     #8a9099;
 
-  --accent:         #3d7341;
-  --accent-glow:    rgba(61, 115, 65, 0.25);
-  --accent-light:   rgba(61, 115, 65, 0.12);
+  --accent:         #9a7b1a;
+  --accent-hover:   #7a6114;
+  --accent-glow:    rgba(154, 123, 26, 0.25);
+  --accent-light:   rgba(154, 123, 26, 0.12);
+  --bg-wash:        rgba(201, 162, 39, 0.14);
 
-  --link:           #2f6b35;
-  --link-hover:     #24542a;
+  --link:           #1a5f8a;
+  --link-hover:     #0d4a6e;
 
   --border:         rgba(28, 34, 41, 0.1);
   --border-strong:  rgba(28, 34, 41, 0.18);
@@ -76,9 +78,9 @@ body {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(61, 115, 65, 0.14), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(74, 138, 80, 0.08), transparent),
-    linear-gradient(180deg, #fafafa 0%, var(--bg-deep) 50%);
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--bg-wash), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(94, 140, 180, 0.08), transparent),
+    linear-gradient(180deg, #faf8f4 0%, var(--bg-deep) 50%);
   pointer-events: none;
 }
 
@@ -112,22 +114,105 @@ a:hover {
 }
 
 /* ============================================================================
+   TOPBAR
+   ============================================================================ */
+
+.topbar {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.5rem 0;
+  font-size: 1rem;
+}
+
+.topbar-langs,
+.topbar-apps {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.topbar-apps {
+  gap: 1.15rem;
+}
+
+.topbar a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.topbar a:hover {
+  color: var(--accent);
+}
+
+.topbar-sep {
+  color: var(--text-light);
+}
+
+.topbar-langs a.is-current {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.topbar-old {
+  margin-left: 0.85rem;
+  font-family: var(--font-serif);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+.topbar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--text-muted);
+}
+
+.topbar-icon:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.topbar-icon svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+/* ============================================================================
    HEADER / HERO
    ============================================================================ */
 
 .header {
-  padding: 2.5rem 1.5rem 1.25rem;
+  padding: 1.5rem 1.5rem 1.25rem;
   text-align: center;
   margin-bottom: 1.5rem;
 }
 
 .header-tag {
-  margin: 0 0 0.6rem;
-  font-size: 0.78rem;
+  margin: 0;
+  font-size: 0.84rem;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent);
+  white-space: nowrap;
+}
+
+.header-tag a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.header-tag a:hover {
+  text-decoration: underline;
 }
 
 .title {
@@ -163,9 +248,9 @@ a:hover {
 }
 
 .toggle-btn {
-  padding: 0.45rem 1.1rem;
+  padding: 0.5rem 1.15rem;
   font-family: var(--font-sans);
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-muted);
   background: transparent;
@@ -190,29 +275,43 @@ a:hover {
   font-weight: 600;
 }
 
-.site-nav {
-  display: flex;
-  gap: 1.25rem;
-  justify-content: center;
-  margin-top: 1.25rem;
+.header-link {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
 }
 
-.site-nav a {
+.header-link a {
   color: var(--text-muted);
-  text-decoration: none;
-  font-size: 0.88rem;
+}
+
+.header-link a:hover {
+  color: var(--accent);
+}
+
+.phrases-link {
+  color: var(--accent);
   font-weight: 500;
-  padding-bottom: 0.2rem;
-  border-bottom: 2px solid transparent;
 }
 
-.site-nav a:hover {
-  color: var(--accent);
+.phrases-link:hover {
+  color: var(--accent-hover);
 }
 
-.site-nav a.active {
+.back-search-btn {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.back-search-btn:hover {
   color: var(--accent);
-  border-bottom-color: var(--accent);
+  background: var(--bg-card);
+  text-decoration: none;
 }
 
 /* ============================================================================
@@ -842,19 +941,16 @@ a:hover {
   color: var(--text);
 }
 
-.example-en,
 .example-ru {
   color: var(--text-muted);
 }
 
-.example-en .gloss-main,
 .example-ru .gloss-main {
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--text-muted);
 }
 
-.example-en .gloss-sub,
 .example-ru .gloss-sub {
   font-size: 0.8rem;
 }
@@ -871,7 +967,6 @@ a:hover {
     color: var(--border-strong);
   }
 
-  .example-en,
   .example-ru {
     font-size: 0.82rem;
   }
@@ -969,6 +1064,15 @@ a:hover {
   text-decoration: underline;
 }
 
+.footer .phrases-link {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.footer .phrases-link:hover {
+  color: var(--accent-hover);
+}
+
 /* ============================================================================
    RESPONSIVE
    ============================================================================ */
@@ -978,8 +1082,13 @@ a:hover {
     padding: 0 1rem 3rem;
   }
 
+  .topbar {
+    padding: 0.85rem 1rem 0;
+    font-size: 0.97rem;
+  }
+
   .header {
-    padding: 2rem 1rem 1rem;
+    padding: 1rem 1rem 1rem;
   }
 
   .title {
@@ -1040,6 +1149,7 @@ a:hover {
 
 @media print {
   .bg-pattern,
+  .topbar,
   .header,
   .search-section,
   .footer {
